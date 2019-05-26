@@ -1,0 +1,124 @@
+В ДЗ реализован паттерн Компоновщик для рассчета стоимости заказа исходя из продаваемых изделий. В заказ могут входить как изготавливаемые на предприятии болюда, 
+которые имеют свой рецепт изготовления, от которого зависит их стоимость, так и товары, которые на предприятии не производятся и чья стоимость зависит только от
+закупочной стоимости. Также, в редких случаях, в состав рецепта блюда могут входить другие изделия, требующие изготовления по рецепту (например соусы). Предполагается,
+что жесткая установка стоимости для изготавливаемых изделий отсутствует и рассчет должен производится исходя из стоимости и политики формирования цен (эта функциональность опущена,
+так как не имеет отношения к ДЗ).
+
+Далее для всех классов приведены только методы получения цены.
+
+public interface Good {
+    double getCost();
+}
+
+public class Dish implements Good {
+    private String name;
+    private double cost;
+    private double id;
+    private ArrayList<Line> receipt;
+
+    @Override
+    public double getCost() {
+        if (cost == 0){
+            calculateCost();
+            return cost;
+        }else{
+            return cost;
+        }
+    }
+
+    public double calculateCost() {
+       double cost = 0;
+        for (Line line:receipt) {
+            cost = cost + line.getItem().getCost()*line.getQuantity();
+        }
+        return cost;
+    }
+}
+
+public class Product implements Good {
+    private String name;
+    private double cost;
+    private double id;
+
+
+    public double getCost() {
+        return cost;
+    }
+
+    public void setCost(double cost) {
+        this.cost = cost;
+    }
+
+}
+
+public class SalesOrder implements Order {
+    private double id;
+    private double totalCost;
+    private Address deliveryAddress;
+    private ArrayList<Line> orderLines;
+
+    public double getTotalCost() {
+        if (totalCost == 0){
+            calculateTotalCost();
+            return totalCost;
+        }else{
+            return totalCost;
+        }
+    }
+
+    public double calculateTotalCost() {
+        double cost = 0;
+        for (Line line:orderLines) {
+            cost = cost + line.getItem().getCost()*line.getQuantity();
+        }
+        totalCost = cost;
+        return cost;
+    }
+
+}
+
+////////////////////// Класс Line для наглядности////////////////////////////
+
+public class Line {
+    private Good item;
+    private double quantity;
+    private UnitOfMeasure unit;
+    private double id;
+
+    public Good getItem() {
+        return item;
+    }
+
+    public double getQuantity() {
+        return quantity;
+    }
+
+    public UnitOfMeasure getUnit() {
+        return unit;
+    }
+
+    public double getId() {
+        return id;
+    }
+
+
+    protected void setItem(Good item) {
+        this.item = item;
+    }
+
+    public void setQuantity(double quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setUnit(UnitOfMeasure unit) {
+        this.unit = unit;
+    }
+
+    public void setId(double id) {
+        this.id = id;
+    }
+
+
+}
+
+
