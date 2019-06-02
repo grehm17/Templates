@@ -103,7 +103,7 @@ public class Shop{
         if (workplaceChain == null){
             workplaceChain = finalHandler;
             workplaceChain.setNext(workplace);
-            workplaceChain.setNext(finalHandler);
+            workplace.setNext(finalHandler);
         }else{
             Workplace temp = workplaceChain;
             while (!temp.getNext().equals(finalHandler)){
@@ -113,6 +113,21 @@ public class Shop{
             workplace.setNext(finalHandler);
         }
     }
+    
+    public void startCooking(SalesOrder order){
+        ArrayList<Dish> dishList = order.getAllDishes();
+        for (Dish dish: dishList) {
+            dishesWaiting.add(dish);
+        }
+    }
+
+    public void handleDishList(){
+        for (Dish dish: dishesWaiting) {
+            workplaceChain.handle(dish);
+        }
+    }
+}
+
     
     public void startCooking(SalesOrder order){
         ArrayList<Dish> dishList = order.getAllDishes();
