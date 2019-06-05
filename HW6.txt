@@ -1,0 +1,230 @@
+public interface Database {
+    DatabaseObject insert(DatabaseObject databaseObject);
+    boolean update(DatabaseObject databaseObject);
+    boolean delete(DatabaseObject databaseObject);
+    DatabaseObject getById(int Id);
+}
+
+public interface DatabaseObject {
+    int getId();
+    void setId(int id);
+}
+
+public class DatabaseImpl implements Database {
+    private ArrayList<DatabaseObject> dataSourse = new ArrayList<>();
+
+    @Override
+    public DatabaseObject insert(DatabaseObject object){
+        dataSourse.add(object);
+        int Id = dataSourse.indexOf(object);
+        object.setId(Id+1);
+        return object;
+    }
+
+    @Override
+    public boolean update(DatabaseObject object){
+        int Id = object.getId();
+        try{
+            dataSourse.get(Id-1);
+            dataSourse.set(Id-1,object);
+            return true;
+        }catch (IndexOutOfBoundsException e){
+            return false;
+        }
+
+    }
+
+    @Override
+    public boolean delete(DatabaseObject object){
+        int Id = object.getId();
+        try{
+            dataSourse.get(Id-1);
+            dataSourse.remove(Id-1);
+            for (int i = Id-1; i<dataSourse.size();i=i+1){
+                dataSourse.get(i).setId(i+1);
+            }
+            return true;
+        }catch (IndexOutOfBoundsException e){
+            return false;
+        }
+    }
+
+    @Override
+    public DatabaseObject getById(int Id){
+        try{
+            return dataSourse.get(Id-1);
+        }catch (IndexOutOfBoundsException e){
+            return null;
+        }
+    }
+
+}
+
+public abstract class DataMapper {
+    protected Database dataSource;
+
+    public Database getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(Database dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    protected DatabaseObject insert(DatabaseObject object){
+        return dataSource.insert(object);
+    }
+    protected boolean update(DatabaseObject object){
+        return dataSource.update(object);
+    }
+    protected boolean delete(DatabaseObject object){
+        return dataSource.delete(object);
+    }
+
+}
+
+public class OrderMapper extends DataMapper {
+    private HashMap<Integer,SalesOrder> identityMap = new HashMap<>();
+
+
+    public SalesOrder insert(SalesOrder order){
+        int Id = order.getId();
+        if (identityMap.containsKey(Id)){
+            return identityMap.get(Id);
+        }else{
+            return (SalesOrder) super.insert(order);
+        }
+    }
+
+
+    public boolean update(SalesOrder order){
+        int Id = order.getId();
+
+        boolean result = super.update(order);
+
+        if (result){
+            if (identityMap.containsKey(Id)){
+                identityMap.put(Id,order);
+            }
+        }
+
+        return  result;
+    }
+
+
+    public boolean delete(SalesOrder order){
+        int Id = order.getId();
+
+        boolean result = super.delete(order);
+
+        if (result){
+            if (identityMap.containsKey(Id)){
+                identityMap.remove(Id);
+            }
+        }
+
+        return  result;
+    }
+
+    public SalesOrder getById(int Id){
+        if (identityMap.containsKey(Id)){
+            return identityMap.get(Id);
+        }else{
+            SalesOrder order = (SalesOrder) super.dataSource.getById(Id);
+            identityMap.put(Id,order);
+            return order;
+        }
+    }
+
+}
+
+public class Test {
+    public static void main(String[] args){
+        DatabaseImpl base = new DatabaseImpl();
+        OrderMapper mapper = new OrderMapper();
+        mapper.setDataSource(base);
+
+        SalesOrder order1 = new SalesOrder();
+        order1.setDeliveryAddress("addr1");
+        order1 = mapper.insert(order1);
+        System.out.println(order1.getId());
+
+        SalesOrder order2 = new SalesOrder();
+        order2.setDeliveryAddress("addr2");
+        order2 = mapper.insert(order2);
+        System.out.println(order2.getId());
+
+        System.out.println(mapper.getById(1).getDeliveryAddress());
+
+        order1.setDeliveryAddress("addr3");
+        mapper.update(order1);
+
+        System.out.println(mapper.getById(1).getDeliveryAddress());
+
+        mapper.delete(order1);
+        System.out.println(mapper.getById(1).getDeliveryAddress());
+
+    }
+}
+
+/////////////////////////////////////////Дополнительно//////////////////////////////////////////////
+public class SalesOrder implements Order,DatabaseObject {
+    private int id;
+    private double totalCost;
+    private String deliveryAddress;
+    private ArrayList<Line> orderLines;
+
+    public int getId() {
+        return id;
+    }
+
+    public double getTotalCost() {
+        if (totalCost == 0){
+            calculateTotalCost();
+            return totalCost;
+        }else{
+            return totalCost;
+        }
+    }
+
+    public double calculateTotalCost() {
+        double cost = 0;
+        for (Line line:orderLines) {
+            cost = cost + line.getItem().getCost()*line.getQuantity();
+        }
+        totalCost = cost;
+        return cost;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public ArrayList<Line> getOrderLines() {
+        return orderLines;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public void setOrderLines(ArrayList<Line> orderLines) {
+        this.orderLines = orderLines;
+    }
+
+    public ArrayList<Dish> getAllDishes(){
+        Good currentGood = null;
+        ArrayList<Dish> dishList = new ArrayList<>();
+        for (Line line: orderLines) {
+            currentGood = line.getItem();
+            if (currentGood instanceof Dish ){
+                dishList.add((Dish) currentGood);
+            }
+        }
+        return dishList;
+    }
+}
