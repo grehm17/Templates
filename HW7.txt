@@ -1,0 +1,159 @@
+Паттерн MVC реализован с помощью Spring.
+
+@SpringBootApplication
+public class HwApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(HwApplication.class, args);
+	}
+
+}
+
+
+@Controller
+public class MainController {
+    private DatabaseImpl database = new DatabaseImpl();
+
+    @GetMapping("/orderlist")
+    public String showDishList(Model model){
+        ArrayList<DatabaseObject> objects = database.getAll();
+        ArrayList<SalesOrder> orders = new ArrayList<>();
+
+        for (DatabaseObject object: objects) {
+           orders.add((SalesOrder) object);
+        }
+
+        model.addAttribute("orders",orders);
+        return "index";
+    }
+
+    @GetMapping("/add")
+    public String addProduct(Model model){
+        SalesOrder newOrder = new SalesOrder();
+        model.addAttribute("order",newOrder);
+        return "edit-order";
+    }
+
+    @PostMapping("/save")
+    public String saveProduct(Model model,@ModelAttribute("order") SalesOrder order){
+        database.insert(order);
+        return "redirect:/orderlist";
+    }
+
+}
+
+public class DatabaseImpl implements Database {
+    private ArrayList<DatabaseObject> dataSourse = new ArrayList<>();
+
+    @Override
+    public DatabaseObject insert(DatabaseObject object){
+        dataSourse.add(object);
+        int Id = dataSourse.indexOf(object);
+        object.setId(Id+1);
+        return object;
+    }
+
+    @Override
+    public boolean update(DatabaseObject object){
+        int Id = object.getId();
+        try{
+            dataSourse.get(Id-1);
+            dataSourse.set(Id-1,object);
+            return true;
+        }catch (IndexOutOfBoundsException e){
+            return false;
+        }
+
+    }
+
+    @Override
+    public boolean delete(DatabaseObject object){
+        int Id = object.getId();
+        try{
+            dataSourse.get(Id-1);
+            dataSourse.remove(Id-1);
+            for (int i = Id-1; i<dataSourse.size();i=i+1){
+                dataSourse.get(i).setId(i+1);
+            }
+            return true;
+        }catch (IndexOutOfBoundsException e){
+            return false;
+        }
+    }
+
+    @Override
+    public DatabaseObject getById(int Id){
+        try{
+            return dataSourse.get(Id-1);
+        }catch (IndexOutOfBoundsException e){
+            return null;
+        }
+    }
+
+    public ArrayList<DatabaseObject> getAll(){
+        return dataSourse;
+    }
+
+}
+
+public class SalesOrder implements Order,DatabaseObject {
+    private int id;
+    private double totalCost;
+    private String deliveryAddress;
+    private ArrayList<Line> orderLines;
+
+    public int getId() {
+        return id;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    public double calculateTotalCost() {
+        double cost = 0;
+        for (Line line:orderLines) {
+            cost = cost + line.getItem().getCost()*line.getQuantity();
+        }
+        totalCost = cost;
+        return cost;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public ArrayList<Line> getOrderLines() {
+        return orderLines;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public void setOrderLines(ArrayList<Line> orderLines) {
+        this.orderLines = orderLines;
+    }
+
+    public ArrayList<Dish> getAllDishes(){
+        Good currentGood = null;
+        ArrayList<Dish> dishList = new ArrayList<>();
+        for (Line line: orderLines) {
+            currentGood = line.getItem();
+            if (currentGood instanceof Dish ){
+                dishList.add((Dish) currentGood);
+            }
+        }
+        return dishList;
+    }
+
+    public void setTotalCost(double totalCost) {
+        this.totalCost = totalCost;
+    }
+
+
+}
