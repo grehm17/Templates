@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Добавить товар</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+    <meta name="ctx" th:content="${#httpServletRequest.getContextPath()}"/>
+</head>
+
+<html>
+
+<body>
+    <form th:action="@{/save}" th:object="${order}" method="post">
+        <input hidden type="text" th:field="*{id}" class="form-control" id="productId">
+        <div class="form-group">
+            <label for="totalCost">Стоимость</label>
+            <input th:field="*{totalCost}" type="number" class="form-control" id="totalCost" placeholder="Введите стоимость заказа">
+        </div>
+        <div class="form-group">
+            <label for="deliveryAddress">Адрес доставки</label>
+            <input type="text" th:field="*{deliveryAddress}" class="form-control" id="deliveryAddress" placeholder="Введите адрес доставки">
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+</div>
+</body>
+</html>
